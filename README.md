@@ -271,8 +271,8 @@ npm run start
 
 This frontend provides a clean, scalable, and testable architecture with:
 
-✅ Authentication (JWT + Refresh)
-✅ User CRUD Dashboard with Pagination
-✅ React Query + Zustand integration
-✅ Tailwind 4 dark/light UI
-✅ Complete testing and linting setup
+- ✅ Authentication (JWT + Refresh)
+- ✅ User CRUD Dashboard with Pagination
+- ✅ React Query + Zustand integration
+- ✅ Tailwind 4 dark/light UI
+- ✅ Complete testing and linting setup
