@@ -1,0 +1,24 @@
+@import 'tailwindcss';
+@reference "tailwindcss/theme" as *;
+
+/* ===================================
+   🎨 Theme Variables (Light + Dark)
+=================================== */
+:root {
+  --background: #f9fafb;
+  --foreground: #111827;
+  --card-bg: #ffffff;
+  --card-text: #1f2937;
+  --radius: 0.5rem;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #0f172a;
+    --foreground: #f9fafb;
+    --card-bg: #1e293b;
+    --card-text: #f1f5f9;
+  }
+}
+
+/* ... rest of your styles ... */
