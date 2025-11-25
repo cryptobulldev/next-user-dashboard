@@ -2,7 +2,7 @@
 import api from './api';
 
 export interface UserPayload {
-  id?: number;
+  id?: string;
   name: string;
   email: string;
   password?: string;
@@ -13,7 +13,7 @@ export async function getUsers(page = 1, limit = 10) {
   return data;
 }
 
-export async function getUserById(id: number) {
+export async function getUserById(id: string) {
   const { data } = await api.get(`/users/${id}`);
   return data;
 }
@@ -23,12 +23,12 @@ export async function createUser(payload: UserPayload) {
   return data;
 }
 
-export async function updateUser(id: number, payload: Partial<UserPayload>) {
+export async function updateUser(id: string, payload: Partial<UserPayload>) {
   const { data } = await api.patch(`/users/${id}`, payload);
   return data;
 }
 
-export async function deleteUser(id: number) {
+export async function deleteUser(id: string) {
   const { data } = await api.delete(`/users/${id}`);
   return data;
 }

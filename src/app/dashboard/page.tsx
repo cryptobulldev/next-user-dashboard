@@ -6,28 +6,39 @@ import { useAuthStore } from '@/store/auth.store';
 import UserTable from './components/UserTable';
 
 export default function DashboardPage() {
-  const { accessToken } = useAuthStore();
+  const { accessToken, hydrated } = useAuthStore();
   const router = useRouter();
 
   useEffect(() => {
-    if (!accessToken) router.push('/login');
-  }, [accessToken, router]);
+    if (!hydrated) return;
+    if (!accessToken) router.push('/auth/login');
+  }, [accessToken, hydrated, router]);
+
+  if (!hydrated) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <p className="text-gray-500">Loading dashboard…</p>
+      </div>
+    );
+  }
 
   return (
-    <div className="p-8">
-      <header className="flex justify-between items-center mb-8">
-        <h1 className="text-3xl font-bold text-gray-800">User Management</h1>
-        <button
-          onClick={() => {
-            useAuthStore.getState().clear();
-            router.push('/login');
-          }}
-          className="bg-red-500 hover:bg-red-600 text-white font-medium px-4 py-2 rounded-md"
-        >
-          Logout
-        </button>
-      </header>
-      <UserTable />
+    <div className="min-h-screen bg-gray-50 py-8 px-4">
+      <div className="max-w-7xl mx-auto">
+        <header className="flex justify-between items-center mb-6">
+          <h1 className="text-3xl font-bold text-gray-800">User Management</h1>
+          <button
+            onClick={() => {
+              useAuthStore.getState().clear();
+              router.push('/auth/login');
+            }}
+            className="bg-red-600 hover:bg-red-700 text-white font-semibold px-6 py-2.5 rounded-lg transition-all shadow-sm hover:shadow focus:ring-4 focus:ring-red-300"
+          >
+            Logout
+          </button>
+        </header>
+        <UserTable />
+      </div>
     </div>
   );
 }

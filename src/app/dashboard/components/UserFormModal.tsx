@@ -7,7 +7,7 @@ import { toast } from 'react-hot-toast';
 interface Props {
   isOpen: boolean;
   onClose: () => void;
-  initialData?: (UserPayload & { id: number }) | null;
+  initialData?: (UserPayload & { id: string }) | null;
   onSuccess?: () => void;
 }
 
@@ -72,17 +72,17 @@ export default function UserFormModal({ isOpen, onClose, initialData, onSuccess 
         role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}
-        className="bg-white dark:bg-gray-900 w-full max-w-md p-6 rounded-2xl shadow-lg"
+        className="bg-white w-full max-w-md p-8 rounded-2xl shadow-md"
       >
-        <h2 id={titleId} className="text-xl font-semibold text-gray-800 dark:text-gray-100 mb-4">
+        <h2 id={titleId} className="text-2xl font-bold text-gray-800 mb-6">
           {title}
         </h2>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
+        <form onSubmit={handleSubmit} className="space-y-6">
+          <div className="space-y-1">
             <label
               htmlFor="user-form-name"
-              className="block text-sm font-medium text-gray-700 dark:text-gray-300"
+              className="block text-sm font-medium text-gray-700"
             >
               Name
             </label>
@@ -91,15 +91,16 @@ export default function UserFormModal({ isOpen, onClose, initialData, onSuccess 
               name="name"
               value={form.name}
               onChange={handleChange}
-              className="w-full mt-1 px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500"
+              className="w-full rounded-lg border border-gray-300 px-4 py-2.5 text-gray-900 placeholder-gray-400 focus:border-blue-600 focus:ring-2 focus:ring-blue-500 focus:ring-offset-1 transition-all"
+              placeholder="User name"
               required
             />
           </div>
 
-          <div>
+          <div className="space-y-1">
             <label
               htmlFor="user-form-email"
-              className="block text-sm font-medium text-gray-700 dark:text-gray-300"
+              className="block text-sm font-medium text-gray-700"
             >
               Email
             </label>
@@ -109,16 +110,17 @@ export default function UserFormModal({ isOpen, onClose, initialData, onSuccess 
               type="email"
               value={form.email}
               onChange={handleChange}
-              className="w-full mt-1 px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500"
+              className="w-full rounded-lg border border-gray-300 px-4 py-2.5 text-gray-900 placeholder-gray-400 focus:border-blue-600 focus:ring-2 focus:ring-blue-500 focus:ring-offset-1 transition-all"
+              placeholder="user@example.com"
               required
             />
           </div>
 
           {!initialData && (
-            <div>
+            <div className="space-y-1">
               <label
                 htmlFor="user-form-password"
-                className="block text-sm font-medium text-gray-700 dark:text-gray-300"
+                className="block text-sm font-medium text-gray-700"
               >
                 Password
               </label>
@@ -128,24 +130,25 @@ export default function UserFormModal({ isOpen, onClose, initialData, onSuccess 
                 type="password"
                 value={form.password ?? ''}
                 onChange={handleChange}
-                className="w-full mt-1 px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500"
+                className="w-full rounded-lg border border-gray-300 px-4 py-2.5 text-gray-900 placeholder-gray-400 focus:border-blue-600 focus:ring-2 focus:ring-blue-500 focus:ring-offset-1 transition-all"
+                placeholder="••••••••"
                 required
               />
             </div>
           )}
 
-          <div className="flex justify-end space-x-3 mt-6">
+          <div className="flex justify-end space-x-3 mt-8">
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 rounded-lg hover:bg-gray-300"
+              className="px-6 py-2.5 bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold rounded-lg transition-all shadow-sm hover:shadow focus:ring-2 focus:ring-gray-400"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={loading}
-              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-70"
+              className="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 disabled:opacity-60 text-white font-semibold rounded-lg transition-all shadow-sm hover:shadow focus:ring-4 focus:ring-blue-300"
             >
               {loading ? 'Saving...' : 'Save'}
             </button>

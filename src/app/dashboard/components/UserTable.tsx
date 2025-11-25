@@ -8,20 +8,7 @@ import TablePagination from './TablePagination';
 import UserRow from './UserRow';
 import UserFormModal from './UserFormModal';
 import { toast } from 'react-hot-toast';
-
-interface User {
-  id: number;
-  name: string;
-  email: string;
-  createdAt: string;
-}
-
-interface UsersResponse {
-  data: User[];
-  meta: {
-    total: number;
-  };
-}
+import { UsersResponse, User } from '@/app/types/user';
 
 export default function UserTable() {
   const [page, setPage] = useState(1);
@@ -35,11 +22,11 @@ export default function UserTable() {
     placeholderData: (previousData) => previousData,
   });
 
-  const users = data?.data ?? [];
-  const total = data?.meta?.total ?? 0;
+  const users = data?.users ?? [];
+  const total = data?.total ?? 0;
   const totalPages = Math.max(1, Math.ceil(total / limit));
 
-  const handleDelete = async (id: number) => {
+  const handleDelete = async (id: string) => {
     if (!confirm('Are you sure you want to delete this user?')) return;
     try {
       await deleteUser(id);
@@ -72,33 +59,37 @@ export default function UserTable() {
   };
 
   return (
-    <div className="w-full bg-white dark:bg-gray-900 shadow-lg rounded-xl p-6">
-      <div className="flex justify-between items-center mb-6">
-        <h2 className="text-xl font-semibold text-gray-800 dark:text-gray-100">User Management</h2>
+    <div className="w-full bg-white shadow-md rounded-2xl p-8">
+      <div className="flex justify-between items-center mb-8">
+        <h2 className="text-2xl font-bold text-gray-800">Users</h2>
         <button
           onClick={handleCreate}
-          className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
+          className="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg transition-all shadow-sm hover:shadow focus:ring-4 focus:ring-blue-300"
         >
           + New User
         </button>
       </div>
 
       {isLoading && users.length === 0 ? (
-        <p className="text-center text-gray-500 dark:text-gray-400">Loading users...</p>
+        <div className="text-center py-12">
+          <p className="text-gray-500 text-lg">Loading users...</p>
+        </div>
       ) : users.length === 0 ? (
-        <p className="text-center text-gray-500 dark:text-gray-400">No users found</p>
+        <div className="text-center py-12">
+          <p className="text-gray-500 text-lg">No users found</p>
+        </div>
       ) : (
-        <div className="overflow-x-auto">
-          <table className="min-w-full border border-gray-200 dark:border-gray-700 rounded-lg">
-            <thead className="bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300">
+        <div className="overflow-x-auto rounded-lg border border-gray-200">
+          <table className="min-w-full divide-y divide-gray-200">
+            <thead className="bg-gray-50">
               <tr>
-                <th className="px-4 py-3 text-left text-sm font-medium">Name</th>
-                <th className="px-4 py-3 text-left text-sm font-medium">Email</th>
-                <th className="px-4 py-3 text-left text-sm font-medium">Created</th>
-                <th className="px-4 py-3 text-right text-sm font-medium">Actions</th>
+                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">Name</th>
+                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">Email</th>
+                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">Created</th>
+                <th className="px-6 py-4 text-right text-sm font-semibold text-gray-700">Actions</th>
               </tr>
             </thead>
-            <tbody>
+            <tbody className="bg-white divide-y divide-gray-200">
               {users.map((user) => (
                 <UserRow
                   key={user.id}

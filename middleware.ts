@@ -1,56 +1,63 @@
-import { NextResponse } from 'next/server';
-import type { NextRequest } from 'next/server';
+import { NextResponse } from "next/server";
+import type { NextRequest } from "next/server";
 
-// Publicly accessible routes
 const PUBLIC_ROUTES = [
-  '/auth/login',
-  '/auth/register',
-  '/auth/forgot-password',
-  '/auth/reset-password',
+  "/auth/login",
+  "/auth/register",
+  "/auth/forgot-password",
+  "/auth/reset-password",
 ];
 
-// Protected routes — add more here if needed
-const PROTECTED_ROUTES = ['/dashboard'];
-
 export function middleware(req: NextRequest) {
-  const token = req.cookies.get('accessToken')?.value;
+  const token = req.cookies.get("accessToken")?.value;
   const { pathname } = req.nextUrl;
 
-  // 🚫 Block direct access to API routes (optional)
-  if (pathname.startsWith('/api/')) {
+  // --- Allow static files, images, scripts, etc.
+  if (
+    pathname.startsWith("/_next") ||
+    pathname.startsWith("/static") ||
+    pathname.startsWith("/favicon.ico")
+  ) {
     return NextResponse.next();
   }
 
-  // ✅ Allow public routes (login/register) without token
+  // --- Allow API routes
+  if (pathname.startsWith("/api")) {
+    return NextResponse.next();
+  }
+
+  // --- Allow public routes
   if (PUBLIC_ROUTES.some((route) => pathname.startsWith(route))) {
-    // If logged in, prevent visiting login/register again
-    if (token && (pathname.startsWith('/auth/login') || pathname.startsWith('/auth/register'))) {
-      const dashboardUrl = new URL('/dashboard', req.url);
-      return NextResponse.redirect(dashboardUrl);
+    // If logged in and user visits /auth/login or /auth/register → redirect to dashboard
+    if (
+      token &&
+      (pathname.startsWith("/auth/login") ||
+        pathname.startsWith("/auth/register"))
+    ) {
+      return NextResponse.redirect(new URL("/dashboard", req.url));
     }
+
     return NextResponse.next();
   }
 
-  // 🔐 Protect private routes
-  if (PROTECTED_ROUTES.some((route) => pathname.startsWith(route))) {
+  // --- Protect all /dashboard routes
+  if (pathname.startsWith("/dashboard")) {
     if (!token) {
-      const loginUrl = new URL('/auth/login', req.url);
-      // Preserve the intended redirect after login
-      loginUrl.searchParams.set('redirect', pathname);
+      const loginUrl = new URL("/auth/login", req.url);
+      loginUrl.searchParams.set("redirect", pathname);
       return NextResponse.redirect(loginUrl);
     }
   }
 
-  // ✅ Default: allow all other routes
+  // Default allow all
   return NextResponse.next();
 }
 
-// ⚙️ Apply middleware only to app routes (not static files)
+// Apply middleware only to these routes
 export const config = {
   matcher: [
-    // Protect these routes
-    '/dashboard/:path*',
-    '/auth/:path*',
-    '/',
+    "/auth/:path*",     // login, register, forgot-password, etc.
+    "/dashboard/:path*", // protected area
+    "/",                 // homepage
   ],
 };
