@@ -4,7 +4,7 @@ import UserRow from '@/app/dashboard/components/UserRow';
 
 describe('UserRow', () => {
   const mockUser = {
-    id: 1,
+    id: '1',
     name: 'Ramer',
     email: 'ramer@example.com',
     createdAt: new Date('2024-01-01').toISOString(),

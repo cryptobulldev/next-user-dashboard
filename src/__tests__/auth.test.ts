@@ -1,84 +1,76 @@
-import { login, register } from '@/lib/auth';
+import {
+  createLoginUser,
+  createRegisterUser,
+} from '@/core/usecases/auth/loginUser';
+import type { AuthDispatch } from '@/state/auth.store';
 
-type AuthStoreMock = {
-  setTokensMock: jest.Mock;
-};
-
-type ApiMock = {
-  post: jest.Mock;
-};
-
-jest.mock('@/store/auth.store', () => {
-  const setTokensMock = jest.fn();
-  return {
-    __esModule: true,
-    useAuthStore: {
-      getState: () => ({ setTokens: setTokensMock }),
-    },
-    setTokensMock,
+describe('auth use cases', () => {
+  const gateway = {
+    login: jest.fn(),
+    register: jest.fn(),
   };
-});
+  const dispatch: AuthDispatch = jest.fn();
 
-jest.mock('@/lib/api', () => ({
-  __esModule: true,
-  default: {
-    post: jest.fn(),
-  },
-}));
-
-const { setTokensMock } = jest.requireMock('@/store/auth.store') as AuthStoreMock;
-const apiMock = jest.requireMock('@/lib/api').default as ApiMock;
-
-describe('auth helpers', () => {
   beforeEach(() => {
     jest.clearAllMocks();
   });
 
-  it('login sends credentials and stores tokens', async () => {
+  it('login sends credentials and dispatches tokens', async () => {
+    const loginUseCase = createLoginUser({ gateway, dispatch });
     const responseData = {
       accessToken: 'access-token',
       refreshToken: 'refresh-token',
-      user: { id: 1, email: 'jane@example.com' },
     };
-    apiMock.post.mockResolvedValueOnce({ data: responseData });
+    gateway.login.mockResolvedValueOnce(responseData);
 
-    const result = await login('jane@example.com', 'password123');
+    const payload = { email: 'jane@example.com', password: 'password123' };
+    const result = await loginUseCase(payload);
 
-    expect(apiMock.post).toHaveBeenCalledWith('/auth/login', {
-      email: 'jane@example.com',
-      password: 'password123',
+    expect(gateway.login).toHaveBeenCalledWith(payload);
+    expect(dispatch).toHaveBeenCalledWith({
+      type: 'LOGIN_SUCCESS',
+      accessToken: 'access-token',
+      refreshToken: 'refresh-token',
     });
-    expect(setTokensMock).toHaveBeenCalledWith('access-token', 'refresh-token');
     expect(result).toEqual(responseData);
   });
 
-  it('register sends payload and stores tokens', async () => {
+  it('register sends payload and dispatches tokens', async () => {
+    const registerUseCase = createRegisterUser({ gateway, dispatch });
     const responseData = {
       accessToken: 'created-access',
       refreshToken: 'created-refresh',
-      user: { id: 2, email: 'new@example.com', name: 'New User' },
     };
-    apiMock.post.mockResolvedValueOnce({ data: responseData });
+    gateway.register.mockResolvedValueOnce(responseData);
 
-    const result = await register('new@example.com', 'StrongPass1!', 'New User');
-
-    expect(apiMock.post).toHaveBeenCalledWith('/auth/register', {
+    const payload = {
       email: 'new@example.com',
       password: 'StrongPass1!',
       name: 'New User',
+    };
+    const result = await registerUseCase(payload);
+
+    expect(gateway.register).toHaveBeenCalledWith(payload);
+    expect(dispatch).toHaveBeenCalledWith({
+      type: 'LOGIN_SUCCESS',
+      accessToken: 'created-access',
+      refreshToken: 'created-refresh',
     });
-    expect(setTokensMock).toHaveBeenCalledWith('created-access', 'created-refresh');
     expect(result).toEqual(responseData);
   });
 
-  it('sets empty refresh token when backend omits it', async () => {
-    const responseData = {
+  it('falls back to empty refresh token when omitted', async () => {
+    const loginUseCase = createLoginUser({ gateway, dispatch });
+    gateway.login.mockResolvedValueOnce({
       accessToken: 'token-without-refresh',
-    };
-    apiMock.post.mockResolvedValueOnce({ data: responseData });
+    });
 
-    await login('solo@example.com', 'secret');
+    await loginUseCase({ email: 'solo@example.com', password: 'secret' });
 
-    expect(setTokensMock).toHaveBeenCalledWith('token-without-refresh', '');
+    expect(dispatch).toHaveBeenCalledWith({
+      type: 'LOGIN_SUCCESS',
+      accessToken: 'token-without-refresh',
+      refreshToken: '',
+    });
   });
 });

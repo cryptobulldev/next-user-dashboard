@@ -2,12 +2,10 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import api from '@/lib/api';
-import { useAuthStore } from '@/store/auth.store';
+import { registerUser } from '@/core/usecases/auth/loginUser';
 
 export default function RegisterForm() {
   const router = useRouter();
-  const setTokens = useAuthStore((state) => state.setTokens);
   const [form, setForm] = useState({ name: '', email: '', password: '' });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -21,10 +19,7 @@ export default function RegisterForm() {
     setError('');
 
     try {
-      const res = await api.post('/auth/register', form);
-      const { accessToken, refreshToken } = res.data;
-      setTokens(accessToken, refreshToken || '');
-      document.cookie = `accessToken=${accessToken}; path=/;`;
+      await registerUser(form);
       router.replace('/dashboard');
     } catch (err: unknown) {
       let message = 'Registration failed';

@@ -2,25 +2,22 @@
 'use client';
 
 import { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
-import { getUsers, deleteUser } from '@/lib/users';
+import { toast } from 'react-hot-toast';
 import TablePagination from './TablePagination';
 import UserRow from './UserRow';
 import UserFormModal from './UserFormModal';
-import { toast } from 'react-hot-toast';
-import { UsersResponse, User } from '@/app/types/user';
+import { useUsersQuery } from '@/interface/hooks/useUsersQuery';
+import { User } from '@/core/domain/user';
+import { deleteUserEntry } from '@/core/usecases/users/manageUsers';
 
 export default function UserTable() {
   const [page, setPage] = useState(1);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [isModalOpen, setModalOpen] = useState(false);
+  const search = '';
   const limit = 10;
 
-  const { data, isLoading, refetch } = useQuery<UsersResponse>({
-    queryKey: ['users', page],
-    queryFn: async () => getUsers(page, limit),
-    placeholderData: (previousData) => previousData,
-  });
+  const { data, isLoading, refetch } = useUsersQuery({ page, limit, search });
 
   const users = data?.users ?? [];
   const total = data?.total ?? 0;
@@ -29,7 +26,7 @@ export default function UserTable() {
   const handleDelete = async (id: string) => {
     if (!confirm('Are you sure you want to delete this user?')) return;
     try {
-      await deleteUser(id);
+      await deleteUserEntry(id);
       toast.success('User deleted successfully');
       refetch();
     } catch (error: unknown) {

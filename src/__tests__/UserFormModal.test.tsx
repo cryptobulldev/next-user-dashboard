@@ -2,11 +2,14 @@ import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import '@testing-library/jest-dom';
 import UserFormModal from '@/app/dashboard/components/UserFormModal';
-import { createUser, updateUser } from '@/lib/users';
+import {
+  createUserEntry,
+  updateUserEntry,
+} from '@/core/usecases/users/manageUsers';
 
-jest.mock('@/lib/users', () => ({
-  createUser: jest.fn(),
-  updateUser: jest.fn(),
+jest.mock('@/core/usecases/users/manageUsers', () => ({
+  createUserEntry: jest.fn(),
+  updateUserEntry: jest.fn(),
 }));
 
 jest.mock('react-hot-toast', () => ({
@@ -23,7 +26,7 @@ describe('UserFormModal', () => {
 
   it('renders Create modal and submits form', async () => {
     const user = userEvent.setup();
-    (createUser as jest.Mock).mockResolvedValue({});
+    (createUserEntry as jest.Mock).mockResolvedValue({});
     const onClose = jest.fn();
     const onSuccess = jest.fn();
 
@@ -38,7 +41,7 @@ describe('UserFormModal', () => {
     await user.click(screen.getByRole('button', { name: /save/i }));
 
     await waitFor(() =>
-      expect(createUser).toHaveBeenCalledWith({
+      expect(createUserEntry).toHaveBeenCalledWith({
         name: 'Ramer',
         email: 'ramer@example.com',
         password: '12345',
@@ -50,10 +53,10 @@ describe('UserFormModal', () => {
 
   it('renders Edit modal and submits update', async () => {
     const user = userEvent.setup();
-    (updateUser as jest.Mock).mockResolvedValue({});
+    (updateUserEntry as jest.Mock).mockResolvedValue({});
     const onClose = jest.fn();
     const onSuccess = jest.fn();
-    const mockUser = { id: 1, name: 'Old Name', email: 'old@example.com' };
+    const mockUser = { id: '1', name: 'Old Name', email: 'old@example.com' };
 
     render(
       <UserFormModal
@@ -70,8 +73,8 @@ describe('UserFormModal', () => {
     await user.click(screen.getByRole('button', { name: /save/i }));
 
     await waitFor(() =>
-      expect(updateUser).toHaveBeenCalledWith(
-        1,
+      expect(updateUserEntry).toHaveBeenCalledWith(
+        '1',
         expect.objectContaining({ name: 'New Name', email: 'old@example.com' }),
       ),
     );

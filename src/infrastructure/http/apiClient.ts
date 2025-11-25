@@ -1,9 +1,9 @@
 import axios, { AxiosError, InternalAxiosRequestConfig } from 'axios';
-import { useAuthStore } from '@/store/auth.store';
+import { useAuthStore } from '@/state/auth.store';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
 
-const api = axios.create({
+const apiClient = axios.create({
   baseURL: API_BASE_URL,
 });
 
@@ -16,10 +16,16 @@ const refreshAccessToken = async (): Promise<string | null> => {
   try {
     const { data } = await axios.post(`${API_BASE_URL}/auth/refresh`, { refreshToken });
     const { accessToken, refreshToken: nextRefreshToken } = data;
-    useAuthStore.getState().setTokens(accessToken, nextRefreshToken || refreshToken);
+    useAuthStore
+      .getState()
+      .dispatch({
+        type: 'TOKEN_REFRESHED',
+        accessToken,
+        refreshToken: nextRefreshToken || refreshToken,
+      });
     return accessToken;
   } catch {
-    useAuthStore.getState().clear();
+    useAuthStore.getState().dispatch({ type: 'LOGOUT' });
     return null;
   }
 };
@@ -33,7 +39,7 @@ const queueRefresh = () => {
   return refreshPromise;
 };
 
-api.interceptors.request.use((config) => {
+apiClient.interceptors.request.use((config) => {
   const token = useAuthStore.getState().accessToken;
   if (token) config.headers.Authorization = `Bearer ${token}`;
   return config;
@@ -41,7 +47,7 @@ api.interceptors.request.use((config) => {
 
 type RetryableRequest = InternalAxiosRequestConfig & { _retry?: boolean };
 
-api.interceptors.response.use(
+apiClient.interceptors.response.use(
   (response) => response,
   async (error: AxiosError) => {
     const originalRequest = error.config as RetryableRequest | undefined;
@@ -53,7 +59,7 @@ api.interceptors.response.use(
       if (newToken) {
         originalRequest.headers = originalRequest.headers ?? {};
         originalRequest.headers.Authorization = `Bearer ${newToken}`;
-        return api(originalRequest);
+        return apiClient(originalRequest);
       }
     }
 
@@ -61,4 +67,5 @@ api.interceptors.response.use(
   },
 );
 
-export default api;
+export default apiClient;
+

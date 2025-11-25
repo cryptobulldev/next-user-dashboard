@@ -2,12 +2,10 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import api from '@/lib/api';
-import { useAuthStore } from '@/store/auth.store';
+import { loginUser } from '@/core/usecases/auth/loginUser';
 
 export default function LoginForm() {
   const router = useRouter();
-  const setTokens = useAuthStore((state) => state.setTokens);
   const [form, setForm] = useState({ email: '', password: '' });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -20,10 +18,7 @@ export default function LoginForm() {
     setError('');
     setLoading(true);
     try {
-      const res = await api.post('/auth/login', form);
-      const { accessToken, refreshToken } = res.data;
-      setTokens(accessToken, refreshToken || '');
-      document.cookie = `accessToken=${accessToken}; path=/;`;
+      await loginUser(form);
       router.replace('/dashboard');
     } catch (err: unknown) {
       let message = 'Invalid credentials';

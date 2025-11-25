@@ -2,7 +2,7 @@
 
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { useAuthStore } from '@/store/auth.store';
+import { useAuthStore } from '@/state/auth.store';
 import UserTable from './components/UserTable';
 
 export default function DashboardPage() {
@@ -29,7 +29,7 @@ export default function DashboardPage() {
           <h1 className="text-3xl font-bold text-gray-800">User Management</h1>
           <button
             onClick={() => {
-              useAuthStore.getState().clear();
+              useAuthStore.getState().dispatch({ type: 'LOGOUT' });
               router.push('/auth/login');
             }}
             className="bg-red-600 hover:bg-red-700 text-white font-semibold px-6 py-2.5 rounded-lg transition-all shadow-sm hover:shadow focus:ring-4 focus:ring-red-300"

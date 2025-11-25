@@ -1,8 +1,12 @@
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
-import { createUser, updateUser, UserPayload } from '@/lib/users';
 import { toast } from 'react-hot-toast';
+import {
+  createUserEntry,
+  updateUserEntry,
+} from '@/core/usecases/users/manageUsers';
+import { UserPayload } from '@/infrastructure/http/userService';
 
 interface Props {
   isOpen: boolean;
@@ -39,10 +43,10 @@ export default function UserFormModal({ isOpen, onClose, initialData, onSuccess 
 
     try {
       if (initialData) {
-        await updateUser(initialData.id, form);
+        await updateUserEntry(initialData.id, form);
         toast.success('User updated successfully!');
       } else {
-        await createUser(form);
+        await createUserEntry(form);
         toast.success('User created successfully!');
       }
       onSuccess?.();

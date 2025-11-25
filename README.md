@@ -26,43 +26,35 @@ src/
 │   └── UserTable.test.tsx
 │
 ├── app/                            # Next.js App Router
-│   ├── auth/                       # Authentication pages
-│   │   ├── login/
-│   │   │   ├── page.tsx
-│   │   │   └── LoginForm.tsx
-│   │   ├── register/
-│   │   │   ├── page.tsx
-│   │   │   └── RegisterForm.tsx
-│   │   └── layout.tsx
-│   │
-│   ├── dashboard/                  # Protected dashboard
-│   │   ├── components/
-│   │   │   ├── TablePagination.tsx
-│   │   │   ├── UserFormModal.tsx
-│   │   │   ├── UserRow.tsx
-│   │   │   └── UserTable.tsx
-│   │   └── page.tsx
-│   │
-│   ├── hooks/
-│   │   └── useUsers.ts             # Custom React Query hook for users
-│   │
-│   ├── types/
-│   │   └── user.ts                 # Shared user type definitions
-│   │
-│   ├── favicon.ico
+│   ├── auth/                       # Authentication pages (login/register)
+│   ├── dashboard/                  # Protected dashboard + UI components
 │   ├── globals.css                 # Global Tailwind and theme styles
 │   ├── layout.tsx                  # Root layout (providers, metadata)
-│   ├── page.tsx                    # Default route → redirects to /dashboard
-│   └── components.tsx              # Global app-level components
+│   └── page.tsx                    # Default route → redirects to /dashboard
 │
-├── lib/                            # Core logic and utilities
-│   ├── api.ts                      # Axios client with JWT interceptor
-│   ├── auth.ts                     # Auth API (login/register/refresh)
-│   ├── users.ts                    # User CRUD API collection
-│   └── queryClient.ts              # React Query configuration
+├── core/                           # Domain + application rules
+│   ├── domain/
+│   │   └── user.ts                 # Pure user entities/DTO contracts
+│   └── usecases/
+│       ├── auth/
+│       │   └── loginUser.ts        # login/register application services
+│       └── users/
+│           └── manageUsers.ts      # CRUD use-cases (get/create/update/delete)
 │
-├── store/
-│   └── auth.store.ts               # Zustand store for auth tokens
+├── infrastructure/                 # Framework + IO implementations
+│   ├── http/
+│   │   ├── apiClient.ts            # Axios client with JWT interceptor
+│   │   ├── authService.ts          # REST gateway for auth
+│   │   └── userService.ts          # REST gateway for user CRUD
+│   └── query/
+│       └── queryClient.ts          # React Query configuration
+│
+├── interface/                      # UI-facing adapters
+│   └── hooks/
+│       └── useUsersQuery.ts        # React Query hook consuming user use-case
+│
+├── state/
+│   └── auth.store.ts               # Event-driven Zustand store for auth tokens
 │
 ├── middleware.ts                   # Route protection middleware
 │
@@ -194,12 +186,35 @@ npx stylelint "**/*.css"
 
 ## 💡 Architecture Highlights
 
-- Feature-based structure (auth, dashboard, etc.)
-- API abstraction through lib/api.ts and lib/auth.ts, lib/users.ts
-- State isolation using Zustand (store/auth.store.ts)
-- React Query caching in lib/queryClient.ts
-- Dark/light theming via CSS variables
-- Strong type safety via src/app/types/user.ts
+- Core-engine layering: `core/` (domain + use-cases), `infrastructure/` (gateways), `interface/` (React adapters) keeps business rules platform-agnostic.
+- API abstraction via `infrastructure/http/*` centralizes retries, token refresh, and payload validation.
+- Event-driven Zustand store (`state/auth.store.ts`) exposes a `dispatch` API instead of imperative setters, enabling observers (analytics, logs) later.
+- React Query configuration lives in `infrastructure/query/queryClient.ts`, while feature hooks (`interface/hooks`) wrap queries for pages.
+- Dark/light theming via CSS variables + Tailwind 4.
+- Strong type safety via domain DTOs (`core/domain/user.ts`).
+
+### 🎯 Why This Architecture (Design Decisions)
+
+- **Next.js App Router + vertical slices** keeps UI files feature-scoped while delegating business logic to `core/usecases`, upholding SRP.
+- **Use-case factories** (`createLoginUser`, `createDeleteUser`, etc.) make dependency injection explicit, so tests can swap gateways without React.
+- **React Query hooks** live in `interface/hooks`, so transport caching remains opt-in per screen but isolated from domain logic.
+- **Event-driven auth store** (dispatching `LOGIN_SUCCESS`, `TOKEN_REFRESHED`, etc.) aligns with the Open/Closed principle—new events extend behavior without mutating consumers.
+- **Middleware + client guards** enforce defense-in-depth while still reading like high-level policy statements (KISS).
+- **Dedicated configuration layer** (ESLint, Stylelint, Jest, Tailwind, TS) keeps code quality DRY and automated.
+
+### ⚖️ Trade-offs
+
+- **Layered folders** introduce more files, which can feel heavy for small teams, but they make boundaries obvious as the app grows.
+- **Use-case factories** mean slightly more boilerplate up front, yet drastically simplify unit testing and refactors.
+- **React Query adapters** add an indirection step versus calling `useQuery` inline, but they let server components or alternative caches reuse the same use-case.
+- **Event-driven store** replaces simple setters with dispatch events, requiring devs to learn the small event vocabulary in exchange for predictable side effects.
+
+### 📈 Scalability Considerations
+
+- **Horizontal growth**: new features drop into `core/usecases/<feature>`, `infrastructure/<delivery>`, and optional interface adapters—no need to touch existing domains.
+- **Data volume**: React Query keys (`['users', page, limit, search]`) and a dedicated `userService` keep pagination + caching logic reusable for future dashboards.
+- **Team scaling**: DTOs in `core/domain` plus use-case factories create natural seams for pair ownership (one squad on domain, another on infra).
+- **Extensibility**: `infrastructure/http/apiClient.ts` remains the single interception point for retries, logging, or transport swaps (REST → gRPC) while use-cases stay unchanged.
 
 ## 🔐 Backend Integration
 
@@ -229,13 +244,13 @@ The frontend consumes your NestJS backend endpoints as follows.
 
 | Frontend Function | Source         | Backend Endpoint          |
 | ----------------- | -------------- | ------------------------- |
-| `register()`      | `lib/auth.ts`  | `POST /auth/register`     |
-| `login()`         | `lib/auth.ts`  | `POST /auth/login`        |
-| `refresh()`       | `lib/auth.ts`  | `POST /auth/refresh`      |
-| `getUsers()`      | `lib/users.ts` | `GET /users?page=&limit=` |
-| `createUser()`    | `lib/users.ts` | `POST /users`             |
-| `updateUser()`    | `lib/users.ts` | `PATCH /users/:id`        |
-| `deleteUser()`    | `lib/users.ts` | `DELETE /users/:id`       |
+| `registerUser()`  | `core/usecases/auth/loginUser.ts`  | `POST /auth/register`     |
+| `loginUser()`     | `core/usecases/auth/loginUser.ts`  | `POST /auth/login`        |
+| `token refresh`   | `infrastructure/http/apiClient.ts` | `POST /auth/refresh`      |
+| `getUsersPage()`  | `core/usecases/users/manageUsers.ts` | `GET /users?page=&limit=` |
+| `createUserEntry()` | `core/usecases/users/manageUsers.ts` | `POST /users`             |
+| `updateUserEntry()` | `core/usecases/users/manageUsers.ts` | `PATCH /users/:id`        |
+| `deleteUserEntry()` | `core/usecases/users/manageUsers.ts` | `DELETE /users/:id`       |
 
 
 ### 💡 Performance Features
